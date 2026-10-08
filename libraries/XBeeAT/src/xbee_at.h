@@ -1,8 +1,12 @@
-#ifndef XBEE_AT_UNICAST_H
-#define XBEE_AT_UNICAST_H
+#ifndef XBEE_AT_H
+#define XBEE_AT_H
 
 #include <stdint.h>
 #include <stdbool.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // Types de pointeurs de fonction pour l'UART (agnostique du hardware)
 typedef void (*xbee_uart_write_fn)(const uint8_t *data, uint16_t len);
@@ -31,4 +35,8 @@ bool xbee_set_destination_64(uint32_t dh, uint32_t dl);
 // Raccourci pour basculer la cible en broadcast (DH=0x0, DL=0xFFFF)
 bool xbee_set_destination_broadcast(void);
 
-#endif // XBEE_AT_UNICAST_H
+#ifdef __cplusplus
+}
+#endif
+
+#endif // XBEE_AT_H

@@ -1,4 +1,4 @@
-#include "frame_proto.h"
+#include "frame_protocol.h"
 #include <stdlib.h>
 
 static uint8_t compute_checksum(const uint8_t *data, uint8_t len) {

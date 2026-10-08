@@ -1,5 +1,5 @@
-#ifndef FRAME_PROTO_H
-#define FRAME_PROTO_H
+#ifndef FRAME_PROTOCOL_H
+#define FRAME_PROTOCOL_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -45,4 +45,4 @@ bool frame_parse_byte(FrameParser_t *parser, uint8_t byte, FrameMsg_t *out_msg);
 }
 #endif
 
-#endif // FRAME_PROTO_H
+#endif // FRAME_PROTOCOL_H
