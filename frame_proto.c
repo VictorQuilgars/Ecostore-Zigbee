@@ -17,19 +17,26 @@ void frame_parser_init(FrameParser_t *parser) {
 void frame_pack(const FrameMsg_t *msg, uint8_t out_frame[FRAME_TOTAL_SIZE]) {
     out_frame[0] = FRAME_START_BYTE;
 
-    // Détermination du bit de signe (d9) et de la valeur absolue (d0-d7)
-    uint8_t sign_bit = (msg->value < 0) ? 1 : 0;
-    uint8_t abs_val  = (uint8_t)(abs(msg->value) & 0xFF);
-    uint8_t cmd_bit  = (msg->cmd == FRAME_CMD_WRITE) ? 1 : 0;
+    uint8_t cmd_bit = 0;
+    switch (msg->cmd) {
+        case FRAME_CMD_WRITE:
+            cmd_bit = 1; // d9 = 0 et d8 = 1 pour WRITE
+            break;
+        case FRAME_CMD_READ:
+            cmd_bit = 0; // d9 = 0 et d8 = 0 pour READ
+            break;
+        case FRAME_CMD_ERROR:
+            cmd_bit = 3; // d9 = 1 et d8 = 1 pour ERROR
+            break;
+    }
 
-    // Octet 1 : Dest (7-5) | Src (4-2) | Signe d9 (bit 1) | Cmd d8 (bit 0)
+    // Octet 1 : Dest (7-5) | Src (4-2) | Cmd d9-d8 (bits 1-0)
     out_frame[1] = (uint8_t)(((msg->dest_id & 0x07) << 5) |
                             ((msg->src_id  & 0x07) << 2) |
-                            ((sign_bit     & 0x01) << 1) |
-                            (cmd_bit       & 0x01));
+                            (cmd_bit       & 0x03));
 
-    // Octet 2 : Valeur absolue 8 bits (d7-d0)
-    out_frame[2] = abs_val;
+    // Octet 2 : Valeur non signée 8 bits (d7-d0)
+    out_frame[2] = msg->value;
 
     // Octet 3 : Checksum sur les 3 premiers octets
     out_frame[3] = compute_checksum(out_frame, 3);
@@ -48,13 +55,22 @@ bool frame_unpack(const uint8_t in_frame[FRAME_TOTAL_SIZE], FrameMsg_t *msg) {
     msg->dest_id = (in_frame[1] >> 5) & 0x07;
     msg->src_id  = (in_frame[1] >> 2) & 0x07;
     
-    // Extraction signe et commande
-    uint8_t sign_bit = (in_frame[1] >> 1) & 0x01;
-    msg->cmd = (FrameCmd_t)(in_frame[1] & 0x01);
+    // Extraction commande (d9-d8), la valeur 0b10 n'est pas définie
+    switch (in_frame[1] & 0x03) {
+        case FRAME_CMD_READ:
+            msg->cmd = FRAME_CMD_READ;
+            break;
+        case FRAME_CMD_WRITE:
+            msg->cmd = FRAME_CMD_WRITE;
+            break;
+        case FRAME_CMD_ERROR:
+            msg->cmd = FRAME_CMD_ERROR;
+            break;
+        default:
+            return false;
+    }
 
-    // Reconstitution de la valeur signée
-    int16_t magnitude = in_frame[2];
-    msg->value = (sign_bit == 1) ? -magnitude : magnitude;
+    msg->value = in_frame[2];
 
     return true;
 }

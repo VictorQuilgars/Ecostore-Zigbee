@@ -4,19 +4,24 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define FRAME_START_BYTE 0xAA
 #define FRAME_TOTAL_SIZE 4
 
 typedef enum {
-    FRAME_CMD_READ  = 0,
-    FRAME_CMD_WRITE = 1
+    FRAME_CMD_READ  = 0x0,
+    FRAME_CMD_WRITE = 0x1,
+    FRAME_CMD_ERROR = 0x3
 } FrameCmd_t;
 
 typedef struct {
     uint8_t dest_id;    // 3 bits (0 à 7)
     uint8_t src_id;     // 3 bits (0 à 7)
-    FrameCmd_t cmd;     // 1 bit : FRAME_CMD_READ ou FRAME_CMD_WRITE (d8)
-    int16_t value;      // Plage : -255 à +255 (d9 pour signe, d0-d7 pour magnitude)
+    FrameCmd_t cmd;     // 2 bits : FRAME_CMD_READ, FRAME_CMD_WRITE ou FRAME_CMD_ERROR (d9-d8)
+    uint8_t value;      // 8 bits non signés (0 à 255, d7-d0)
 } FrameMsg_t;
 
 typedef enum {
@@ -35,5 +40,9 @@ void frame_parser_init(FrameParser_t *parser);
 void frame_pack(const FrameMsg_t *msg, uint8_t out_frame[FRAME_TOTAL_SIZE]);
 bool frame_unpack(const uint8_t in_frame[FRAME_TOTAL_SIZE], FrameMsg_t *msg);
 bool frame_parse_byte(FrameParser_t *parser, uint8_t byte, FrameMsg_t *out_msg);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // FRAME_PROTO_H
